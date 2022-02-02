@@ -1,0 +1,12 @@
+# Allwinner H3 quad core 512MB RAM SoC headless
+BOARD_NAME="eTactica EGM400"
+BOARDFAMILY="sun8i"
+BOOTCONFIG="nanopi_neo_defconfig"
+MODULES="g_cdc"
+MODULES_BLACKLIST="lima"
+DEFAULT_OVERLAYS=""
+DEFAULT_CONSOLE="serial"
+SERIALCON="ttyS0,ttyGS0"
+BUILD_DESKTOP="no"
+BOOT_FDT_FILE="sun8i-h3-etactica-egm400.dtb"
+KERNEL_TARGET="current,edge"

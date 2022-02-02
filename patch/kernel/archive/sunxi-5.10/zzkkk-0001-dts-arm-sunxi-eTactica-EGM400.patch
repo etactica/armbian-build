@@ -1,0 +1,184 @@
+From 45f7c59d5be88ae1769e86946984d26f7d5b29a3 Mon Sep 17 00:00:00 2001
+From: Karl Palsson <karlp@tweak.net.au>
+Date: Wed, 2 Feb 2022 17:38:14 +0000
+Subject: [PATCH] dts: arm/sunxi: eTactica EGM400
+
+EGM400 is a DIN rail mounted, Allwinner H3, with 512MB ram, 8GB eMMC,
+two digital inputs, two digital outputs, a RS485 port, an LTE-Cat1
+modem, a SPI connected ATM90E32/36 power meter, a RTL8821CU
+wifi+bluetooth module, ethernet, a usb host port for expansion, a usb
+micro-b port for gadget mode, and a micro SD slot for expansion.
+
+Signed-off-by: Karl Palsson <karlp@etactica.com>
+---
+ arch/arm/boot/dts/Makefile                    |   1 +
+ .../arm/boot/dts/sun8i-h3-etactica-egm400.dts | 145 ++++++++++++++++++
+ 2 files changed, 146 insertions(+)
+ create mode 100644 arch/arm/boot/dts/sun8i-h3-etactica-egm400.dts
+
+diff --git a/arch/arm/boot/dts/Makefile b/arch/arm/boot/dts/Makefile
+index 7e0934180724..0a968dfd89e8 100644
+--- a/arch/arm/boot/dts/Makefile
++++ b/arch/arm/boot/dts/Makefile
+@@ -1245,6 +1245,7 @@ dtb-$(CONFIG_MACH_SUN8I) += \
+ 	sun8i-h3-bananapi-m2-plus.dtb \
+ 	sun8i-h3-bananapi-m2-plus-v1.2.dtb \
+ 	sun8i-h3-beelink-x2.dtb \
++	sun8i-h3-etactica-egm400.dtb \
+ 	sun8i-h3-libretech-all-h3-cc.dtb \
+ 	sun8i-h3-mapleboard-mp130.dtb \
+ 	sun8i-h3-nanopi-duo2.dtb \
+diff --git a/arch/arm/boot/dts/sun8i-h3-etactica-egm400.dts b/arch/arm/boot/dts/sun8i-h3-etactica-egm400.dts
+new file mode 100644
+index 000000000000..2fa54e60eb01
+--- /dev/null
++++ b/arch/arm/boot/dts/sun8i-h3-etactica-egm400.dts
+@@ -0,0 +1,145 @@
++// SPDX-License-Identifier: (GPL-2.0 OR MIT OR X11)
++/*
++ * Copyright (C) 2021 Karl Palsson <karlp@etactica.com>
++ */
++/dts-v1/;
++#include "sun8i-h3.dtsi"
++#include "sunxi-common-regulators.dtsi"
++
++#include <dt-bindings/gpio/gpio.h>
++#include <dt-bindings/leds/common.h>
++#include <dt-bindings/input/input.h>
++
++/ {
++	model = "eTactica EGM400";
++	compatible = "etactica,egm400", "allwinner,sun8i-h3";
++
++	aliases {
++		serial0 = &uart0;
++		ethernet0 = &emac;
++	};
++
++       leds {
++                compatible = "gpio-leds";
++
++		// Internal led, not visible...
++                power {
++			color = <LED_COLOR_ID_RED>;
++			function = LED_FUNCTION_POWER;
++                        gpios = <&r_pio 0 10 GPIO_ACTIVE_HIGH>;
++                        default-state = "off";
++                };
++
++		// Internal led, not visible...
++                status_core {
++			color = <LED_COLOR_ID_GREEN>;
++                        gpios = <&pio 0 10 GPIO_ACTIVE_HIGH>;
++                };
++
++
++		status_app {
++			color = <LED_COLOR_ID_BLUE>;
++			gpios = <&pio 0 6 GPIO_ACTIVE_HIGH>;
++		};
++        };
++
++};
++
++&ehci0 {
++	status = "okay";
++};
++&ehci1 {
++	status = "okay";
++};
++&ehci2 {
++	status = "okay";
++};
++&ehci3 {
++	status = "okay";
++};
++
++&emac {
++	phy-handle = <&int_mii_phy>;
++	phy-mode = "mii";
++	allwinner,leds-active-low;
++	status = "okay";
++};
++
++&mmc0 {
++        bus-width = <4>;
++        cd-gpios = <&pio 5 6 GPIO_ACTIVE_LOW>;
++        status = "okay";
++        vmmc-supply = <&reg_vcc3v3>;
++};
++
++&ohci0 {
++	status = "okay";
++};
++
++&ohci1 {
++	status = "okay";
++};
++
++&ohci2 {
++	status = "okay";
++};
++
++&ohci3 {
++	status = "okay";
++};
++
++&pio {
++	uart2_rs485_pins: uart2-rs485-pins {
++		pins = "PA0", "PA1", "PA2";
++		function ="uart2";
++	};
++
++	// PA11 == modem pwrkey
++	// PA12 == modem reset
++	// PA17 == modem pwr
++
++	// PE12 == rs485 bus power enable
++
++	// PA18 = DIN1
++	// PA19 = DIN0
++	// PA20 = DOUT0
++	// PA21 = DOUT1
++
++	// SPI is on SPi1, PA13..PA16
++	// PA3 == spi IRQ
++	// PL11 is meter zx
++};
++
++&spi1 {
++	status = "okay";
++
++	atm90e3x@0 {
++		reg = <0>;
++		compatible = "linux,spidev";
++		spi-max-frequency = <2000000>; // Nominally 2.28MHz per datasheet
++	};
++};
++
++&uart0 {
++        pinctrl-names = "default";
++        pinctrl-0 = <&uart0_pa_pins>;
++        status = "okay";
++};
++
++&uart2 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&uart2_rs485_pins>;
++	// or, we use uart2_pa_pins plus "rts-gpios" with a single one for rts?
++	status = "okay";
++};
++
++&usb_otg {
++	status = "okay";
++	dr_mode = "peripheral";
++};
++
++&usbphy {
++	usb0_id_det-gpios = <&pio 6 12 GPIO_ACTIVE_HIGH>; /* PG12 */
++	status = "okay";
++};
++
+-- 
+2.31.1
+
